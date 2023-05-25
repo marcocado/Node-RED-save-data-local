@@ -1,0 +1,423 @@
+[
+    {
+        "id": "d0b2aa9639fc53a1",
+        "type": "tab",
+        "label": "Temperatur Übermittelung",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "a71fd74404ce1b09",
+        "type": "mqtt in",
+        "z": "d0b2aa9639fc53a1",
+        "name": "",
+        "topic": "Temperaturmessung",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "c6a5d8c7e6b2391b",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 150,
+        "y": 60,
+        "wires": [
+            [
+                "26e2b1aa211a44c7"
+            ]
+        ]
+    },
+    {
+        "id": "26e2b1aa211a44c7",
+        "type": "function",
+        "z": "d0b2aa9639fc53a1",
+        "name": "String to Number",
+        "func": "msg.payload = parseFloat(msg.payload);\nflow.set('temperature', msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 60,
+        "wires": [
+            []
+        ],
+        "icon": "node-red/arrow-in.svg"
+    },
+    {
+        "id": "c7ab59f88794d0a4",
+        "type": "influxdb out",
+        "z": "d0b2aa9639fc53a1",
+        "influxdb": "97a51805e0f4228f",
+        "name": "influxDB - Temperatur",
+        "measurement": "Temperatur",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "embedded",
+        "bucket": "ebike",
+        "x": 920,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "2224dd8139d63567",
+        "type": "function",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Main Function",
+        "func": "var temperature = flow.get(\"temperature\");\nmsg.payload = {\n    measurement: \"temperature\",\n    value: temperature,\n    location: \"battery\",\n    time: msg.payload\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 300,
+        "wires": [
+            [
+                "a95f218a51a02f9b",
+                "60c7066fe4ae3abf",
+                "f30a20da3679f5b6"
+            ]
+        ]
+    },
+    {
+        "id": "1db1f6b53bbc439b",
+        "type": "inject",
+        "z": "d0b2aa9639fc53a1",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "3",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "Time",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 300,
+        "wires": [
+            [
+                "2224dd8139d63567"
+            ]
+        ]
+    },
+    {
+        "id": "7591432bf5a69179",
+        "type": "ui_switch",
+        "z": "d0b2aa9639fc53a1",
+        "name": "",
+        "label": "WLAN Switch",
+        "tooltip": "Shows if WLAN is connected",
+        "group": "551286df96120ea9",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "connection",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "true",
+        "onvalueType": "bool",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "false",
+        "offvalueType": "bool",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 140,
+        "y": 140,
+        "wires": [
+            [
+                "d31e8da81fc60c11"
+            ]
+        ]
+    },
+    {
+        "id": "d31e8da81fc60c11",
+        "type": "function",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Set WLAN Status",
+        "func": "flow.set('connection', msg.payload);",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a95f218a51a02f9b",
+        "type": "function",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Check Connection",
+        "func": "var connection = flow.get('connection');\nif (connection == true){\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 650,
+        "y": 300,
+        "wires": [
+            [
+                "c7ab59f88794d0a4"
+            ]
+        ]
+    },
+    {
+        "id": "60c7066fe4ae3abf",
+        "type": "function",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Check Offline",
+        "func": "var connection = flow.get('connection');\nif (connection == false) {\n    msg.payload.time = String(msg.payload.time);\n    msg.payload.temperature = String(msg.payload.temperature);\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 380,
+        "wires": [
+            [
+                "e47c6c6f7eb94a56"
+            ]
+        ]
+    },
+    {
+        "id": "fadc722850a72cbb",
+        "type": "file",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Write CSV-File",
+        "filename": "/home/marco/Downloads/test.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "false",
+        "encoding": "utf8",
+        "x": 1120,
+        "y": 380,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "f30a20da3679f5b6",
+        "type": "function",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Check Toggle",
+        "func": "var connection = flow.get('connection');\nvar beforeConnection = flow.get('beforeConnection');\nflow.set('beforeConnection', connection);\nif (beforeConnection != connection && connection == true){\n    msg.payload = true;\n    return msg;\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 220,
+        "wires": [
+            [
+                "47a388dd0a506369"
+            ]
+        ]
+    },
+    {
+        "id": "47a388dd0a506369",
+        "type": "file in",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Read CSV-File",
+        "filename": "/home/marco/Downloads/test.csv",
+        "filenameType": "str",
+        "format": "utf8",
+        "chunk": false,
+        "sendError": false,
+        "encoding": "utf8",
+        "allProps": false,
+        "x": 900,
+        "y": 220,
+        "wires": [
+            [
+                "0680bb0230434604",
+                "b545b9c99b6a1f8a"
+            ]
+        ]
+    },
+    {
+        "id": "e47c6c6f7eb94a56",
+        "type": "csv",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Write CSV",
+        "sep": ",",
+        "hdrin": "",
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 890,
+        "y": 380,
+        "wires": [
+            [
+                "fadc722850a72cbb"
+            ]
+        ]
+    },
+    {
+        "id": "0680bb0230434604",
+        "type": "csv",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Read CSV",
+        "sep": ",",
+        "hdrin": "",
+        "hdrout": "none",
+        "multi": "one",
+        "ret": "\\n",
+        "temp": "",
+        "skip": "0",
+        "strings": true,
+        "include_empty_strings": "",
+        "include_null_values": "",
+        "x": 1130,
+        "y": 220,
+        "wires": [
+            [
+                "284be392ec770ced"
+            ]
+        ]
+    },
+    {
+        "id": "284be392ec770ced",
+        "type": "function",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Convert to Format",
+        "func": "msg.payload.col1.topic = \"measurement\";\nmsg.payload = {\n    measurement: msg.payload.col1,\n    value: msg.payload.col2,\n    location: msg.payload.col3,\n    time: msg.payload.col4\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1370,
+        "y": 220,
+        "wires": [
+            [
+                "da383c35d03db566"
+            ]
+        ]
+    },
+    {
+        "id": "da383c35d03db566",
+        "type": "influxdb out",
+        "z": "d0b2aa9639fc53a1",
+        "influxdb": "97a51805e0f4228f",
+        "name": "influxDB - Temperatur",
+        "measurement": "Temperatur",
+        "precision": "",
+        "retentionPolicy": "",
+        "database": "database",
+        "precisionV18FluxV20": "ms",
+        "retentionPolicyV18Flux": "",
+        "org": "embedded",
+        "bucket": "ebike",
+        "x": 1640,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "b545b9c99b6a1f8a",
+        "type": "file",
+        "z": "d0b2aa9639fc53a1",
+        "name": "Delete CSV-File",
+        "filename": "/home/marco/Downloads/test.csv",
+        "filenameType": "str",
+        "appendNewline": true,
+        "createDir": false,
+        "overwriteFile": "delete",
+        "encoding": "none",
+        "x": 1620,
+        "y": 300,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "c6a5d8c7e6b2391b",
+        "type": "mqtt-broker",
+        "name": "Mosquitto",
+        "broker": "127.0.0.1",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "97a51805e0f4228f",
+        "type": "influxdb",
+        "hostname": "127.0.0.1",
+        "port": "8086",
+        "protocol": "http",
+        "database": "database",
+        "name": "influxDB",
+        "usetls": false,
+        "tls": "",
+        "influxdbVersion": "2.0",
+        "url": "local_network-ip4v",
+        "rejectUnauthorized": true
+    },
+    {
+        "id": "551286df96120ea9",
+        "type": "ui_group",
+        "name": "Control",
+        "tab": "e3c90ef078f47054",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "e3c90ef078f47054",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    }
+]
